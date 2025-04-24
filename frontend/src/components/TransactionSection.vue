@@ -1,6 +1,6 @@
 <template>
   <div class="transactions-section">
-    <h2>Remboursements</h2>
+    <label><strong>J'ai dépensé :</strong></label>
     <ul>
       <li v-for="(transaction, index) in transactions" :key="index">
         <span>{{ transaction.payer }} a payé {{ transaction.amount }}€ pour {{ transaction.description }}</span>
@@ -18,7 +18,7 @@
       </li>
     </ul>
 
-    <h3>💸 nouvelle transaction</h3>
+    <label><strong>Nouvelle transaction : </strong></label>
 
     <!-- Formulaire pour ajouter une nouvelle transaction -->
     <form @submit.prevent="addTransaction">
@@ -27,7 +27,7 @@
 
       <input v-model="newTransaction.amount" type="number" placeholder="Montant total" required />
       <input v-model="newTransaction.for" placeholder="Objet de la dépense" required />
-      
+      <div>Qui participe ?</div>
       <div class="checkbox-group">
         <label v-for="(user, idx) in users" :key="idx">
           <input type="checkbox" :value="user.surname" v-model="newTransaction.repayUsers" />
@@ -68,15 +68,18 @@ export default {
       const repayments = this.newTransaction.repayUsers.map(user => ({
         user,
         amount: amountPerUser,
-        paid: false
+        paid: user === this.user.surname
       }));
 
       const transaction = {
   payer: this.user.surname,
   amount: amount,
-  description: this.newTransaction.for, 
-  beneficiaries: this.newTransaction.repayUsers, 
+  description: this.newTransaction.for,
+  beneficiaries: this.newTransaction.repayUsers,
+  repayments: repayments, // ← c’est bien ce champ qu’on utilise
+  id: Date.now() // ajoute un id si ce n’est pas encore fait
 };
+
 
 
       // Émettre l'événement pour ajouter la transaction

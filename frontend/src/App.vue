@@ -1,21 +1,22 @@
 <template>
   <div id="app">
     <div class="header">
-      <h1>🎪 La Team aux Vieilles</h1>
-      <div class="settings-icon" @click="goToHome">🏠</div>
-      <div class="settings-icon" @click="goToProfile">👤</div>
-      <div class="settings-icon" @click="goToAdmin">⚙️</div>
+      <h1 class="title">🎪 La Team aux Vieilles</h1>
+      <div class="nav-icons">
+        <div class="icon" @click="goToHome">🏠</div>
+        <div class="icon" @click="goToConcert">🎵</div>
+        <div class="icon" @click="goToProfile">👤</div>
+        <div class="icon" @click="goToAdmin">⚙️</div>
+      </div>
     </div>
-    <hr />
     <router-view />
   </div>
 </template>
 
-
 <script>
 export default {
   name: 'App',
-  methods: {  
+  methods: {
     goToAdmin() {
       this.$router.push({ name: 'Admin' });
     },
@@ -24,39 +25,59 @@ export default {
     },
     goToProfile() {
       this.$router.push({ name: 'ProfilePage' });
+    },
+    goToConcert() {
+      this.$router.push({ name: 'Concert' });
     }
   }
 };
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Righteous&display=swap');
+
+#app {
+  background-color: #FFF4E6;
+  min-height: 100vh;
+  font-family: 'Righteous', cursive;
+}
+
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background: linear-gradient(90deg, #FF6B00, #FF9E3D);
+  padding: 15px 25px;
+  color: white;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-.settings-icon {
-  font-size: 1.8em;
+.title {
+  font-size: 2rem;
+  margin: 0;
+}
+
+.nav-icons {
+  display: flex;
+  gap: 15px;
+}
+
+.icon {
+  background-color: white;
+  color: #FF6B00;
+  border-radius: 50%;
+  font-size: 1.6em;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: transform 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
-.settings-icon:hover {
-  transform: rotate(90deg);
-}
-
-nav {
-  margin-bottom: 10px;
-}
-
-router-link {
-  margin: 0 10px;
-  text-decoration: none;
-  color: #2c3e50;
-}
-
-router-link.active {
-  font-weight: bold;
+.icon:hover {
+  transform: scale(1.1);
 }
 </style>

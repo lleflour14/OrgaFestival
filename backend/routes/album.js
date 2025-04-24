@@ -19,17 +19,28 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // Route pour télécharger un fichier
-router.post('/upload', upload.single('file'), (req, res) => {
+router.post('/upload', upload.array('files'), (req, res) => {
   try {
-    if (!req.file) {
+    if (!req.files || req.files.length === 0) {
       return res.status(400).send({ message: 'Aucun fichier n\'a été téléchargé' });
     }
-    res.status(200).send({ message: 'Fichier téléchargé avec succès', file: req.file });
+
+    const fileInfos = req.files.map(file => ({
+      filename: file.filename,
+      path: `/uploads/${file.filename}`
+    }));
+
+    res.status(200).send({
+      message: 'Fichiers téléchargés avec succès',
+      files: fileInfos
+    });
   } catch (err) {
     console.error('Erreur lors de l\'upload:', err);
     res.status(500).send({ message: 'Erreur serveur lors de l\'upload' });
   }
 });
+
+
 
 router.get('/', (req, res) => {
     fs.readdir(uploadsDir, (err, files) => {

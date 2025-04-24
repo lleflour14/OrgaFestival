@@ -1,22 +1,34 @@
 const express = require('express');
 const router = express.Router();
-const { readExcelFile, writeExcelFile } = require('../utils/excelManager');
-const filePath = './data/users.xlsx';
+const { readExcelFile } = require('../utils/excelManager');;
+const path = require('path');
+const filePath = path.join(__dirname, '..', 'users.xlsx');
 
 // Ajouter ou modifier des affaires pour un utilisateur
-router.put('/:id/gear', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const { gear } = req.body;
-    const users = await readExcelFile(filePath);
-    const index = users.findIndex(u => u.id === req.params.id);
-    if (index === -1) return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    const data = await readExcelFile(filePath);
+    const groupedGears = {};
 
-    users[index].gear = gear;
-    await writeExcelFile(filePath, users);
-    res.json(users[index]);
-  } catch (err) {
-    res.status(500).json({ error: 'Erreur lors de la mise à jour des affaires' });
+    data.forEach(user => {
+      if (Array.isArray(user.gear)) {
+        user.gear.forEach(g => {
+          if (g.item && g.quantity) {
+            if (!groupedGears[user.surname]) {
+              groupedGears[user.surname] = [];
+            }
+            groupedGears[user.surname].push(`${g.item} x${g.quantity}`);
+          }
+        });
+      }
+    });
+
+    res.json({ groupedGears });
+  } catch (error) {
+    console.error('Erreur lecture gear:', error);
+    res.status(500).json({ error: 'Impossible de lire les affaires' });
   }
 });
+
 
 module.exports = router;

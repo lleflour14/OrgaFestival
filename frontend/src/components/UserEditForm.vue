@@ -21,6 +21,7 @@
           <li v-for="(item, i) in formData.gear" :key="i">
             <input type="text" v-model="item.item" placeholder="Objet" />
             <input type="number" v-model.number="item.quantity" placeholder="Quantité" />
+            <button type="button" @click="removeItem(i)" class="delete-btn">🗑</button>
           </li>
         </ul>
         <button type="button" @click="addItem">Ajouter un objet</button>
@@ -46,6 +47,9 @@
       addItem() {
         this.formData.gear.push({ item: '', quantity: 1 });
       },
+      removeItem(index) {
+      this.formData.gear.splice(index, 1);
+    },
     },
   };
   </script>
@@ -63,5 +67,17 @@
     padding: 5px;
     margin: 5px 0;
   }
+  .delete-btn {
+  background-color: #e57373;
+  color: white;
+  border: none;
+  padding: 5px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background-color: #d32f2f;
+}
   </style>
   

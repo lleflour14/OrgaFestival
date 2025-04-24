@@ -3,6 +3,8 @@
     <div class="user-details">
       <div v-if="user && user.surname">
   <h1>{{ user.surname }} - Profil</h1>
+  <br/>
+  <h2>Infos :</h2>
 </div>
 
       <!-- Formulaire d'édition -->
@@ -26,6 +28,28 @@
         </div>
         <button @click="$emit('edit')">Modifier</button>
       </div>
+      
+      <div>
+        <h2>Remboursements : </h2>
+  <label><strong>Je dois :</strong></label>
+  <ul>
+    <li v-for="(transaction, i) in userRepayments" :key="i">
+      <div>
+        {{ transaction.payer }} a payé {{ transaction.amount }}€ pour {{ transaction.description }}
+        <div v-for="(repayment, j) in transaction.repayments" :key="j">
+          <div v-if="repayment.user === user.surname">
+            Je dois {{ repayment.amount }}€
+            <input
+              type="checkbox"
+              v-model="repayment.paid"
+              @change="checkIfAllPaid(transaction)"
+            /> Remboursé
+          </div>
+        </div>
+      </div>
+    </li>
+  </ul>
+</div>
 
       <!-- Section des transactions -->
       <TransactionSection
@@ -67,8 +91,22 @@ export default {
     },
     saveEdit(data) {
       this.$emit('save', data); // Émettre l'événement pour sauvegarder les modifications
-    }
+    },
+    checkIfAllPaid(transaction) {
+  const allPaid = transaction.repayments.every(r => r.paid);
+  if (allPaid) {
+    this.$emit('deleteTransaction', transaction.id);
   }
+}
+
+  },
+  computed: {
+  userRepayments() {
+    return this.transactions.filter(transaction =>
+      transaction.repayments?.some(r => r.user === this.user.surname)
+    );
+  }
+}
 };
 </script>
 

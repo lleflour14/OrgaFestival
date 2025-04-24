@@ -18,7 +18,7 @@ app.use(bodyParser.json());
 
 app.use('/api/users', usersRoutes);             // /api/users/
 app.use('/api/users', transactionsRoutes);      // /api/users/:id/transactions
-app.use('/api/users', affairesRoutes);          // /api/users/:id/gear
+app.use('/api/affaires', affairesRoutes);          // /api/affaires
 app.use('/api/courses', coursesRoutes);         // /api/courses/
 app.use('/api/album',albumRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
