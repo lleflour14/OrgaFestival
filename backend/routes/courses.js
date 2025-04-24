@@ -1,47 +1,67 @@
 const express = require('express');
 const router = express.Router();
-const fs = require('fs');
+const { readExcelFile, writeExcelFile } = require('../utils/excelManager');;
+const path = require('path');
 const XLSX = require('xlsx');
+const filePath = path.join(__dirname, '..', 'courses.xlsx');
 
-const filePath = './data/courses.xlsx';
+function writeCoursesToExcel(data, path = filePath) {
+  // Ne garder que les champs nécessaires
+  const cleanedData = data.map(course => ({
+    id: course.id,
+    item: course.item,
+    quantity: course.quantity
+  }));
 
-router.get('/', (req, res) => {
-  try {
-    if (!fs.existsSync(filePath)) {
-      return res.json([]); // si le fichier n'existe pas encore
-    }
+  const worksheet = XLSX.utils.json_to_sheet(cleanedData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Courses');
+  XLSX.writeFile(workbook, path);
+}
 
-    const workbook = XLSX.readFile(filePath);
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(sheet);
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: 'Erreur de lecture des courses' });
-  }
+// Récupérer la liste
+router.get('/', async (req, res) => {
+  const data = await readExcelFile(filePath);
+  res.json({ courses: data });
 });
 
-router.post('/', (req, res) => {
+// Ajouter un produit
+router.post('/', async (req, res) => {
   try {
+    const courses = await readExcelFile(filePath);
     const newItem = req.body;
-
-    let data = [];
-    if (fs.existsSync(filePath)) {
-      const workbook = XLSX.readFile(filePath);
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      data = XLSX.utils.sheet_to_json(sheet);
-    }
-
-    data.push(newItem);
-
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Courses');
-    XLSX.writeFile(wb, filePath);
-
+    courses.push(newItem);
+    await writeCoursesToExcel(courses);
     res.status(201).json(newItem);
   } catch (err) {
-    res.status(500).json({ error: 'Erreur d\'écriture des courses' });
+    console.error('❌ Erreur ajout course:', err);
+    res.status(500).json({ error: 'Erreur ajout course' });
   }
 });
+
+// Modifier un produit
+router.put('/:id', async (req, res) => {
+  const courses = await readExcelFile(filePath);
+  const index = courses.findIndex(c => c.id === req.params.id);
+  if (index !== -1) {
+    courses[index] = { ...courses[index], ...req.body };
+    await writeExcelFile(filePath, courses);
+    res.json(courses[index]);
+  } else {
+    res.status(404).json({ error: 'Produit non trouvé' });
+  }
+});
+
+// Supprimer un produit
+router.delete('/:id', async (req, res) => {
+  const productID = Number(req.params.id);
+  console.log("🔍 Suppression du produit avec l'id :", productID);
+  let courses = await readExcelFile(filePath);
+  courses = courses.filter(c => c.id !== productID);
+  console.log("🔍 courses:", courses);
+  await writeExcelFile(filePath, courses);
+  res.status(204).send();
+});
+
 
 module.exports = router;
