@@ -1,23 +1,5 @@
 <template>
   <div class="transactions-section">
-    <label><strong>J'ai dépensé :</strong></label>
-    <ul>
-      <li v-for="(transaction, index) in transactions" :key="index">
-        <span>{{ transaction.payer }} a payé {{ transaction.amount }}€ pour {{ transaction.description }}</span>
-        <!-- Affichage des remboursements pour chaque transaction -->
-        <div v-if="transaction.repayments && transaction.repayments.length > 0">
-          <p>A partager entre :</p>
-          <ul>
-            <li v-for="(repayment, idx) in transaction.repayments" :key="idx">
-              {{ repayment.userId }} doit {{ repayment.amount }}€ 
-              <input type="checkbox" v-model="repayment.paid" /> Remboursé
-            </li>
-          </ul>
-        </div>
-        <button @click="$emit('deleteTransaction', transaction.id)">❌</button>
-      </li>
-    </ul>
-
     <label><strong>Nouvelle transaction : </strong></label>
 
     <!-- Formulaire pour ajouter une nouvelle transaction -->
@@ -92,7 +74,7 @@ export default {
         repayUsers: [] // Réinitialisation de la liste des utilisateurs
       };
     }
-  }
+  },
 };
 </script>
 

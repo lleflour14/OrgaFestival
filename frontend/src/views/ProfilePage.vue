@@ -63,7 +63,7 @@ export default {
 
         async fetchTransactions(id) {
     try {
-        const res = await axios.get(`http://localhost:3000/api/users/${id}/transactions`);
+        const res = await axios.get(`http://localhost:3000/api/transactions/${id}/transactions`);
         this.transactions = res.data.map(t => {
 
             // Si la transaction contient déjà des 'repayments', on les conserve.
@@ -127,12 +127,20 @@ export default {
         console.error('Erreur mise à jour user:', e);
     }
 },
+async fetchAllTransactions() {
+  try {
+    const res = await axios.get(`http://localhost:3000/api/transactions`);
+    this.transactions = res.data;
+  } catch (e) {
+    console.error('Erreur fetch all transactions:', e);
+  }
+},
 
         async addTransaction(transaction) {
   try {
     console.log('🎯 Données à envoyer :', transaction);
 
-    const response = await fetch(`http://localhost:3000/api/users/${this.selectedUser.id}/transactions`, {
+    const response = await fetch(`http://localhost:3000/api/transactions/${this.selectedUser.id}/transactions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -153,7 +161,7 @@ export default {
             const confirmed = confirm("Tu es sûr·e ?");
             if (!confirmed) return;
             try {
-                await axios.delete(`http://localhost:3000/api/users/${this.selectedUser.id}/transactions/${index}`);
+                await axios.delete(`http://localhost:3000/api/transactions/${this.selectedUser.id}/transactions/${index}`);
                 this.transactions.splice(index, 1);
                 this.fetchTransactions(this.selectedUser.id)
             } catch (e) {
@@ -163,6 +171,7 @@ export default {
     },
     mounted() {
         this.fetchUsers();
+        this.fetchAllTransactions(); 
         const id = this.$route.params.id;
         if (id) this.fetchUserInfo(id);
     },

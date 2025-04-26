@@ -28,28 +28,24 @@
         </div>
         <button @click="$emit('edit')">Modifier</button>
       </div>
-      
-      <div>
-        <h2>Remboursements : </h2>
-  <label><strong>Je dois :</strong></label>
+
+      <div v-if="userRepayments.length">
+  <h3>💰 Je dois :</h3>
   <ul>
-    <li v-for="(transaction, i) in userRepayments" :key="i">
-      <div>
-        {{ transaction.payer }} a payé {{ transaction.amount }}€ pour {{ transaction.description }}
-        <div v-for="(repayment, j) in transaction.repayments" :key="j">
-          <div v-if="repayment.user === user.surname">
-            Je dois {{ repayment.amount }}€
-            <input
-              type="checkbox"
-              v-model="repayment.paid"
-              @change="checkIfAllPaid(transaction)"
-            /> Remboursé
-          </div>
-        </div>
-      </div>
+    <li v-for="(repayment, index) in userRepayments" :key="index">
+      <span>
+        À {{ repayment.payer }} – {{ repayment.amount }}€ pour "{{ repayment.description }}"
+      </span>
+      <input
+        type="checkbox"
+        v-model="repayment.paid"
+        @change="markAsPaid(repayment)"
+      />
+      Remboursé
     </li>
   </ul>
 </div>
+
 
       <!-- Section des transactions -->
       <TransactionSection
@@ -68,6 +64,7 @@
 <script>
 import UserEditForm from './UserEditForm.vue';
 import TransactionSection from './TransactionSection.vue';
+import axios from 'axios';
 
 export default {
   props: {
@@ -75,10 +72,7 @@ export default {
     users: Array, // Liste des utilisateurs
     jours: Array, // Jours de présence
     isEditing: Boolean, // Indicateur d'édition
-    transactions: {
-      type: Array,
-      default: () => [] // Transactions par défaut
-    },
+    transactions: Array,
     newTransaction: {
       type: Object,
       default: () => ({ repayUsers: [] }) // Structure de la nouvelle transaction
@@ -92,21 +86,41 @@ export default {
     saveEdit(data) {
       this.$emit('save', data); // Émettre l'événement pour sauvegarder les modifications
     },
-    checkIfAllPaid(transaction) {
-  const allPaid = transaction.repayments.every(r => r.paid);
-  if (allPaid) {
-    this.$emit('deleteTransaction', transaction.id);
+    async markAsPaid(repayment) {
+    // Mets à jour le statut "paid" dans la transaction correspondante dans this.transactions
+    const tx = this.transactions.find(t => t.id === repayment.transactionId);
+    if (tx) {
+      const repayment = tx.repayments.find(r => r.userId === this.user.surname);
+      if (repayment) {
+        repayment.paid = true;
+        // Si tous ont remboursé, supprime la transaction
+        const allPaid = tx.repayments.every(r => r.paid);
+        if (allPaid) {
+          this.$emit('deleteTransaction', repayment.transactionId);
+        }
+      }
+    }
   }
-}
 
   },
-  computed: {
+computed: {
   userRepayments() {
-    return this.transactions.filter(transaction =>
-      transaction.repayments?.some(r => r.user === this.user.surname)
+    if (!this.user.surname || !this.transactions) return [];
+
+    return this.transactions.flatMap(t =>
+      (t.repayments || [])
+        .filter(r => r.userId === this.user.surname && !r.paid)
+        .map(r => ({
+          transactionId: t.id,
+          payer: t.payer,
+          amount: r.amount,
+          description: t.description,
+          paid: r.paid
+        }))
     );
   }
 }
+
 };
 </script>
 

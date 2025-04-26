@@ -4,6 +4,16 @@ const { readExcelFile, writeExcelFile } = require('../utils/excelManager');
 const path = require('path');
 const filePath = path.join(__dirname, '..', 'users.xlsx');
 
+router.get('/', async (req, res) => {
+  try {
+    const users = await readExcelFile(filePath);
+    const allTransactions = users.flatMap(user => user.transactions || []);
+    res.json(allTransactions);
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur lors du chargement des transactions.' });
+  }
+});
+
 // 🟢 Récupérer les transactions d’un utilisateur
 router.get('/:id/transactions', async (req, res) => {
   try {
@@ -46,25 +56,29 @@ router.post('/:id/transactions', async (req, res) => {
       }))
     };
 
-    // Ajouter la transaction au payeur
-    users[payerIndex].transactions = users[payerIndex].transactions || [];
-    users[payerIndex].transactions.push(transaction);
-
     // Ajouter une transaction visible chez chaque bénéficiaire
     for (const beneficiaryId of beneficiaries) {
-      const beneficiaryIndex = users.findIndex(u => String(u.id) === String(beneficiaryId));
+      const beneficiaryIndex = users.findIndex(u => String(u.surname) === String(beneficiaryId));
       if (beneficiaryIndex !== -1) {
         users[beneficiaryIndex].transactions = users[beneficiaryIndex].transactions || [];
         users[beneficiaryIndex].transactions.push({
-          id: transaction.id,
+          transactionId: transaction.id,  // 🔁 pour correspondre au format attendu
           payer,
           amount: parseFloat(amountPerPerson),
           description,
-          repayTo: req.params.id, // ID du payeur
+          repayments: [
+            {
+              userId: beneficiaryId,
+              amount: parseFloat(amountPerPerson),
+              paid: false
+            }
+          ],
           paid: false
         });
+        console.log(users[beneficiaryIndex].transactions)
       }
     }
+    
 
     await writeExcelFile(filePath, users);
     res.status(201).json(transaction);
@@ -86,7 +100,7 @@ router.delete('/:id/transactions/:transactionId', async (req, res) => {
     }
 
     user.transactions = (user.transactions || []).filter(
-      t => t.id.toString() !== transactionId.toString()
+      t => String(t.id) !== String(transactionId)
     );
     await writeExcelFile(filePath, users);
     res.json({ message: 'Transaction supprimée' });
@@ -97,6 +111,32 @@ router.delete('/:id/transactions/:transactionId', async (req, res) => {
   }
 });
 
+router.patch('/:id/transactions/:transactionId', async (req, res) => {
+  try {
+    const { id, transactionId } = req.params;
+    const { paid } = req.body; // true ou false
+    const users = await readExcelFile(filePath);
+
+    const user = users.find(u => String(u.id) === String(id));
+    if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' });
+
+    if (user.transactions) {
+      const transaction = user.transactions.find(
+        t => (t.id || t.transactionId) === transactionId
+      );
+      if (transaction) {
+        transaction.paid = paid;
+        await writeExcelFile(filePath, users);
+        return res.json({ message: 'Statut mis à jour' });
+      }
+    }
+
+    res.status(404).json({ error: 'Transaction non trouvée' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erreur lors de la mise à jour' });
+  }
+});
 
 
 

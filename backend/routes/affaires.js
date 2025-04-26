@@ -4,7 +4,6 @@ const { readExcelFile } = require('../utils/excelManager');;
 const path = require('path');
 const filePath = path.join(__dirname, '..', 'users.xlsx');
 
-// Ajouter ou modifier des affaires pour un utilisateur
 router.get('/', async (req, res) => {
   try {
     const data = await readExcelFile(filePath);
